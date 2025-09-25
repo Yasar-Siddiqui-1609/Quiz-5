@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gamified Quiz Levels</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #74ebd5, #ACB6E5);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .game-container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      width: 95%;
+      max-width: 500px;
+      text-align: center;
+      position: relative;
+    }
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+    .lives span {
+      font-size: 1.4rem;
+      margin: 0 3px;
+      color: #ff6b6b;
+    }
+    .question { font-size: 1.2rem; margin: 15px 0; }
+    .options { display: grid; gap: 12px; }
+    .option {
+      background: #f1f1f1;
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .option:hover { background: #e2e2e2; }
+    .correct { background: #55efc4 !important; }
+    .wrong { background: #ff7675 !important; }
+    .progress {
+      height: 10px; background: #ddd; border-radius: 5px;
+      margin: 15px 0; overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%; width: 0%;
+      background: #74b9ff;
+      transition: width 0.4s ease;
+    }
+    .result { font-size: 1.2rem; margin-top: 20px; }
+    .btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 12px;
+      background: #6c5ce7;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .btn:hover { background: #5a4dd6; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="status-bar">
+      <div class="lives" id="lives">❤️❤️❤️</div>
+      <div id="xp">⭐ XP: 0</div>
+      <div id="streak">🔥 Streak: 0</div>
+      <div id="level">🏅 Level: 1</div>
+    </div>
+
+    <div class="progress"><div class="progress-bar" id="progress"></div></div>
+    <div class="question" id="question">Loading...</div>
+    <div class="options" id="options"></div>
+    <div class="result" id="result"></div>
+    <button class="btn" id="nextLevelBtn" style="display:none;">➡️ Next Level</button>
+    <button class="btn" id="restartBtn" style="display:none;">🔄 Restart</button>
+  </div>
+
+  <script>
+    const levels = [
+      [
+        { question: "5 + 3 = ?", options: ["7", "8"], answer: "8" },
+        { question: "Which is prime?", options: ["9", "11"], answer: "11" },
+        { question: "12 ÷ 4 = ?", options: ["3", "6"], answer: "3" }
+      ],
+      [
+        { question: "x in 2x = 10 ?", options: ["2", "5"], answer: "5" },
+        { question: "15 - 7 = ?", options: ["8", "9"], answer: "8" },
+        { question: "Square root of 49?", options: ["7", "9"], answer: "7" }
+      ],
+      [
+        { question: "Derivative of x²?", options: ["2x", "x²"], answer: "2x" },
+        { question: "Probability of head in coin toss?", options: ["1/2", "1/3"], answer: "1/2" },
+        { question: "Equation of a line slope m?", options: ["y=mx+c", "y=x²"], answer: "y=mx+c" }
+      ]
+    ];
+
+    let level = 0;
+    let current = 0;
+    let score = 0;
+    let streak = 0;
+    let lives = 3;
+
+    const qEl = document.getElementById("question");
+    const optEl = document.getElementById("options");
+    const resEl = document.getElementById("result");
+    const xpEl = document.getElementById("xp");
+    const streakEl = document.getElementById("streak");
+    const livesEl = document.getElementById("lives");
+    const levelEl = document.getElementById("level");
+    const progressBar = document.getElementById("progress");
+    const restartBtn = document.getElementById("restartBtn");
+    const nextLevelBtn = document.getElementById("nextLevelBtn");
+
+    function loadQuestion() {
+      if (current >= levels[level].length || lives === 0) {
+        endLevel();
+        return;
+      }
+      let q = levels[level][current];
+      qEl.textContent = q.question;
+      optEl.innerHTML = "";
+      resEl.textContent = "";
+      q.options.forEach(opt => {
+        let btn = document.createElement("div");
+        btn.classList.add("option");
+        btn.textContent = opt;
+        btn.onclick = () => selectAnswer(btn, q.answer);
+        optEl.appendChild(btn);
+      });
+      progressBar.style.width = (current / levels[level].length) * 100 + "%";
+    }
+
+    function selectAnswer(btn, correct) {
+      if (btn.textContent === correct) {
+        btn.classList.add("correct");
+        score += 10;
+        streak++;
+      } else {
+        btn.classList.add("wrong");
+        streak = 0;
+        lives--;
+      }
+      updateStatus();
+      setTimeout(() => { current++; loadQuestion(); }, 1000);
+    }
+
+    function updateStatus() {
+      xpEl.textContent = `⭐ XP: ${score}`;
+      streakEl.textContent = `🔥 Streak: ${streak}`;
+      livesEl.textContent = "❤️".repeat(lives);
+      levelEl.textContent = `🏅 Level: ${level + 1}`;
+    }
+
+    function endLevel() {
+      qEl.textContent = (lives === 0) ? "💀 Game Over!" : "🎉 Level Completed!";
+      optEl.innerHTML = "";
+      resEl.textContent = `XP: ${score} | Best Streak: ${streak}`;
+      if (lives > 0 && level < levels.length - 1) {
+        nextLevelBtn.style.display = "inline-block";
+      } else {
+        restartBtn.style.display = "inline-block";
+      }
+    }
+
+    nextLevelBtn.onclick = () => {
+      level++;
+      current = 0;
+      nextLevelBtn.style.display = "none";
+      loadQuestion();
+    };
+
+    restartBtn.onclick = () => {
+      level = 0; current = 0; score = 0; streak = 0; lives = 3;
+      restartBtn.style.display = "none";
+      updateStatus();
+      loadQuestion();
+    };
+
+    updateStatus();
+    loadQuestion();
+  </script>
+</body>
+</html>
